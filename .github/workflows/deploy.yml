@@ -1,0 +1,47 @@
+name: Deploy HTML Version Page #visas i GitHub Actions översikt
+
+on: #När workflow ska exekveras
+
+  push: #körs när det pushas till main branch
+    branches:
+      - main
+  schedule: #körs automatiskt enligt schema var 5:e minut (cron syntax)
+    - cron: "*/5 * * * *" # Runs every 5 minutes
+
+jobs: # jobb som ska köras i workflow
+  build:
+    runs-on: ubuntu-latest  # TODO:  skulle ha någon annan vertion här får kolla upp d
+
+    steps: # HERE WE GO steg  1 som ska köras
+    - name: Checkout code # tror dessa är för att hämta koden från repot
+      uses: actions/checkout@v3 # hämtar färdig action från github som action/checkout@v3 fårn github repo så att repot kan hämtas nedan
+        #HERE WE GO AGAIN Steg 2 ställer in python versionen anväder 
+    - name: Set up Python 
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x' # Version 3.x FINNS FLER VERSIONER
+        #HERE WE GO AGAIN Steg 3 installerar dependencies FRÅN dOCKERFILE kör greå kommandon i dockerfile  sen typ awk tar verionsnumret fron den första raden i dockerfile
+    - name: Extract Version from Dockerfile
+      run: |
+        export VERSION=$(grep "^FROM" Dockerfile | awk -F":" '{print $2}') 
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Update HTML with version
+      run: | # här ersätts {{VERSION}} med versionen från dockerfile för att uppdatera index.html sidan så att den visar versionen som är aktuell
+        sed -i "s/{{VERSION}}/${{ env.VERSION }}/" index.html  
+
+    - name: Build Docker image
+      run: docker build -t adam-work-dir:${{ env.VERSION }} . # bygger docker image med taggen myapp och versionen från dockerfile
+        #HERE WE GO AGAIN Steg 4 kollar om servicen samt bygger och kör den -d flaggan gör att den körs i bakgrunden
+    - name: Run Container
+      run: docker run -d -p 8000:8000 myapp:${{ env.VERSION }}
+        
+    - name: Curl to confirm service is running
+      run: curl http://localhost:8000
+
+    - name: Deploy or further steps
+      run: echo "Deployment step can be added here"
+        #includera i steg 5 en python script som uppdaterar html sidan med versionen från dockerfile
+    - name: Update HTML with Python script
+      run: python update_html.py
+

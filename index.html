@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Version Info</title>
+</head>
+<body>
+    <h1>Version: <span id="version"></span></h1>
+    <p>Date: <span id="date"></span></p>
+</body>
+<script>
+    document.getElementById('version').innerText = '1.0.0';
+    document.getElementById('date').innerText = new Date().toLocaleDateString();
+</script>
+</html>
